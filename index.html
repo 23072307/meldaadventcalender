@@ -1,0 +1,402 @@
+  <!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>❤️ Advent Calendar ❤️</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  min-height:100vh;
+  color:#fff;
+  overflow-x:hidden;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,120,170,.25), transparent 40%),
+    radial-gradient(circle at 80% 0%, rgba(255,180,200,.2), transparent 45%),
+    linear-gradient(180deg,#14000a,#050004,#000);
+}
+
+
+.snowflake{
+  position:fixed;
+  top:-10px;
+  opacity:.45;
+  animation:fall linear infinite;
+  filter:blur(.2px);
+}
+@keyframes fall{to{transform:translateY(110vh)}}
+
+
+.container{
+  width:95%;
+  max-width:1000px;
+  margin:50px auto;
+  padding:42px;
+  border-radius:34px;
+  background:linear-gradient(180deg,
+    rgba(255,245,248,.14),
+    rgba(255,220,230,.06));
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(255,190,210,.35);
+  box-shadow:
+    0 50px 120px rgba(255,105,180,.35),
+    inset 0 0 60px rgba(255,255,255,.05);
+}
+
+
+h1{
+  text-align:center;
+  font-size:2.7rem;
+  letter-spacing:1px;
+  color:#ffe4ec;
+  text-shadow:
+    0 0 12px rgba(255,180,200,.9),
+    0 0 30px rgba(255,120,160,.6);
+}
+
+
+.subtitle{
+  text-align:center;
+  margin:18px 0 36px;
+  font-size:1.08rem;
+  color:#ffe0ea;
+  opacity:.95;
+}
+
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(115px,1fr));
+  gap:22px;
+}
+
+
+.day{
+  height:115px;
+  border-radius:26px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:32px;
+  font-weight:700;
+  cursor:pointer;
+  color:#fff;
+  background:
+    linear-gradient(145deg,#ff9fb5,#ff4d6d,#b5173f);
+  box-shadow:
+    0 18px 45px rgba(255,80,120,.65),
+    inset 0 0 25px rgba(255,255,255,.25);
+  position:relative;
+  transition:.35s ease;
+  overflow:hidden;
+}
+
+
+.day::before{
+  content:'';
+  position:absolute;
+  inset:-40%;
+  background:radial-gradient(circle,rgba(255,255,255,.5),transparent 60%);
+  opacity:.25;
+  transform:rotate(25deg);
+}
+
+
+.day:hover{
+  transform:translateY(-8px) scale(1.05);
+  box-shadow:
+    0 28px 65px rgba(255,80,120,.85),
+    inset 0 0 30px rgba(255,255,255,.35);
+}
+
+
+.day.locked{
+  background:linear-gradient(145deg,#3a3a3a,#1a1a1a);
+  opacity:.45;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  backdrop-filter:blur(12px);
+}
+
+
+.modal-content{
+  max-width:540px;
+  width:100%;
+  padding:30px;
+  border-radius:34px;
+  background:
+    linear-gradient(180deg,#fff4f8,#ffffff);
+  color:#333;
+  text-align:center;
+  animation:pop .35s ease;
+  box-shadow:
+    0 45px 110px rgba(255,105,180,.55),
+    inset 0 0 40px rgba(255,220,230,.5);
+  border:1px solid rgba(255,180,200,.6);
+}
+
+@keyframes pop{
+  from{transform:scale(.82);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+
+.modal-content img{
+  max-width:100%;
+  border-radius:22px;
+  margin-bottom:18px;
+  box-shadow:0 20px 50px rgba(255,105,180,.45);
+}
+
+.modal-content p{
+  font-size:1.15rem;
+  line-height:1.75;
+}
+
+
+.close{
+  margin-top:26px;
+  padding:14px 30px;
+  border:none;
+  border-radius:26px;
+  font-size:16px;
+  cursor:pointer;
+  color:white;
+  background:
+    linear-gradient(135deg,#ff9fb5,#ff4d6d);
+  box-shadow:0 14px 35px rgba(255,80,120,.75);
+}
+
+.modal-content{
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+
+.modal-content{
+  -webkit-overflow-scrolling: touch;
+}
+.modal-content img,
+.modal-content p,
+.modal-content audio {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>🎄 Canım Sevgilim 🎄</h1>
+  <div class="subtitle">Bugünden 1 Ocak'a kadar… Sana özel bir şey yapmak istedim 💌</div>
+  <div class="grid" id="calendar"></div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content" id="modalContent"></div>
+</div>
+
+<script>
+for(let i=0;i<40;i++){
+  const s=document.createElement('div');
+  s.className='snowflake';
+  s.innerText='❄';
+  s.style.left=Math.random()*100+'vw';
+  s.style.animationDuration=3+Math.random()*5+'s';
+  s.style.fontSize=12+Math.random()*18+'px';
+  document.body.appendChild(s);
+}
+
+const days=[
+{text:'Bugün ilk gün ve dünki durumdan dolayı çok üzgünüm bi daha asla yaşanmayacak ilk gün özür dileme günü olsun istedim ama kuru kuru özür dileme olsun istemiyorum bu yüzden bugünün hediyesi bu numarayı ara sana güzel şeyler söyleyecek(+905342439419) diğer günler için gün gün cidden detaylı düşündüm ve hediyeler giderek fizikselleşecek özellikle benim yanında olduğum günler haberin olsun.Ayrıca sürpriz olsun diye diğer günleri kilitledim umarım beğenirsin seni çok seviyorum bebeğim yarınki hediyede görüşmek üzere ❤️'},
+{text:'Merhaba! Bugün seni benim için çok özel ve belki de aramızdaki aşkın ve elektriğin oluşmaya başladığ o ana götürmek istedim. Seni çok seviyorum aşkım 😊(şarkıyı oynat ve o anı düşün o gün neler yaptığımızı bu anın ne kadar hayalini kurduğumuzu)',image:'images/day2.jpg',audio:'audio/day2.mp3'},
+
+{
+  slides: [
+    {
+      text:"Bugün seni sen yapan şeyler günü olsun istedim. Sayfa sayfa göreceksin umarım beğenirsin (göreceğin şeyler bende en çok iz bırakan özelliklerin)"
+    },
+    {
+      text: "Gözlerimin içine derin derin bakışların... Bazen hiçbir şey söylemeden her şeyi anlatıyor.",
+      image: "images/slide1.jpg",
+      audio: "audio/slide1.mp3"
+    },
+    {
+      text: "Gülüşün... Seninle ilgili tek bir dilek dileyebilsem hep gülmen derim çünkü sen gülünce her şey pozitifleşiyor,Dünya daha yaşanabilir oluyor benim için",
+      image: "images/slide2.jpg",
+      audio: "audio/slide2.mp3"
+    },
+    {
+      text: "Kendini hiç kasmadan takındığın tatlı tavırlar ve o doğal hallerin...",
+      image: "images/slide3.jpg",
+      audio: "audio/slide3.mp3"
+    },
+    {
+      text: "Ve bütün bunların toplamı yani seni çok ama çok seviyorummm... İyiki varsın <3",
+      image: "images/slide4.jpg",
+      audio: "audio/slide4.mp3"
+    }
+  ]
+},
+
+{text:"Bugün sana sözlerini tamamen benim yazdığım bi şarkı armağan ediyorum komik olmuş da olabilir ama şarkı yazmak istedim inş beğenirsin",
+ audio:"audio/day4.mp3"
+},
+
+
+{
+  slides: [
+    {
+      text:"Bugün seninle beraber gelecekte nasıl bi hayat yaşamak istediğimi paylaşmak istiyorum"
+    },
+    {
+      text:"İlk olarak belki ütopik gelebilir bilmiyorum ama amerikaya taşınmak ve orada yaşamaya başlamak... Daha canlansın diye evimizin olacağı yerleri göstermek istiyorum",
+      link: "https://earth.google.com/web/search/Ho-Ho-Kus,+New+Jersey,+Amerika+Birle%c5%9fik+Devletleri/@41.00659911,-74.10578314,43.46423675a,0d,60y,198.1106738h,78.7995928t,0r/data=CqIBGnQSbgolMHg4OWMyZTQ4YWJlYjU4YjE1OjB4ZmJiYjljMTQ5NjdmMjAyZhkcxu5Msn9EQCHtNfOaDYdSwCozSG8tSG8tS3VzLCBOZXcgSmVyc2V5LCBBbWVyaWthIEJpcmxlxZ9payBEZXZsZXRsZXJpGAEgASImCiQJS9v17yyAREAR64Epxmh_REAZfSZWa0aGUsAh5sctiZqGUsBCAggBIhoKFnZPcGltbThfempvY0cwSFFiajg4Z2cQAjoDCgEwQgIIAEoNCP___________wEQAA",
+      audio:"audio/home.mp3"
+    },
+    {text:"Amerikada bu oturduğumuz yer new york a çok yakın hergün new york'a çalışmaya gidiyoruz...",
+     image:"images/newyork.jpg",
+     audio:"audio/newyork.mp3"
+    },
+    {text:"Ve gün sonunda evimize gelip doyasıya dizi izlicez beraber vakit geçiricez...",
+    image:"images/home2.jpg",
+    audio:"audio/home2.mp3"
+  }
+  ]
+},
+
+
+
+
+{text:'x'},{text:'x'},{text:'x'},{text:'x'},{text:'x'},
+{text:'x'},{text:'x'},{text:'x'},{text:'x'},{text:'x'},{text:'x'},{text:'x'},{text:'x'},{text:'x'}
+];
+
+const calendar = document.getElementById('calendar');
+
+const start = new Date('2025-12-13T00:00:00'); 
+const now = new Date();
+
+let diff = Math.floor((now - start) / (1000 * 60 * 60 * 24)) + 1;
+
+
+if (now < start) {
+  diff = 0;
+}
+
+days.forEach((d,i)=>{
+  const day=document.createElement('div');
+  day.className='day';
+  day.innerText=i+1;
+  if(i+1>diff){day.classList.add('locked')}
+  else{day.onclick=()=>openModal(d,i===days.length-1)}
+  calendar.appendChild(day);
+});
+
+let slideIndex = 0;
+let currentAudio = null;
+
+function openModal(day, isFinal) {
+  const m = document.getElementById('modal');
+  const c = document.getElementById('modalContent');
+
+  slideIndex = 0;
+
+  function renderSlide() {
+    let html = '';
+
+    const slide = day.slides ? day.slides[slideIndex] : day;
+
+    if (slide.image) {
+      html += `<img src="${slide.image}">`;
+    }
+
+    html += `<p>${slide.text}</p>`;
+
+    if (slide.link) {
+  html += `
+    <a href="${slide.link}" target="_blank" style="
+      display:inline-block;
+      margin-top:16px;
+      padding:12px 20px;
+      background:#ff4d6d;
+      color:white;
+      border-radius:20px;
+      text-decoration:none;
+      font-weight:bold;
+    ">
+      🌍 Evimiz
+    </a>
+  `;
+}
+
+
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+
+    if (slide.audio) {
+      html += `
+        <audio id="slideAudio" controls autoplay>
+          <source src="${slide.audio}" type="audio/mpeg">
+        </audio>
+      `;
+    }
+
+    if (day.slides && slideIndex < day.slides.length - 1) {
+      html += `<button class="close" onclick="nextSlide()">Sonraki 💖</button>`;
+    } else {
+      html += `<button class="close" onclick="closeModal()">Kapat 💕</button>`;
+    }
+
+    c.innerHTML = html;
+
+    const audioEl = document.getElementById('slideAudio');
+    if (audioEl) currentAudio = audioEl;
+  }
+
+  window.nextSlide = function () {
+    slideIndex++;
+    renderSlide();
+  };
+
+  renderSlide();
+  m.style.display = 'flex';
+}
+
+function closeModal(){document.getElementById('modal').style.display='none'}
+</script>
+
+</body>
+</html>
+                                           
+
+
+
+  
+
+
+
+
+                         
